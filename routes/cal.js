@@ -89,7 +89,8 @@ function buildCal(vecEv,alarms) {
     });
     vecEv.forEach(function(it,ind){
         var myDate = it[1][2] + "-" + it[1][1] + "-" + it[1][0]+ "T" + getHour(it[1][3]);
-        var startDate = new Date(moment.tz(myDate,"Europe/Paris").format());
+        // var startDate = new Date(moment.tz(myDate,"Europe/Paris").format());
+        var startDate = new Date(myDate);
         var endDate = new Date(startDate.getTime()+3600000);
         var event = cal.createEvent({
             start: startDate,
@@ -139,6 +140,7 @@ exports.getCals = function(req,res) {
             var ev = $(this).children().first().text();
             var vectDate0 = $(this).children().eq(1).children().eq(1).text().split(" ");
             var vectDate = vectDate0[0].split("/").concat(vectDate0[2]);
+            console.log(vectDate);
             vecEv.push([ev,vectDate]);
         });
         res.setHeader("Content-Type", 'text/calendar');
