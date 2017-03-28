@@ -121,10 +121,9 @@ exports.getCals = function(req,res) {
     if (cals.length == 1 && cals[0] == "all") {
         url = url + '&taille=100&debut=0';
     } else {
-        cals.join('+');
+        cals = cals.join('+');
         url = url + '?conjoncture=' + cals + '&taille=100&debut=0';
     }
-    
     nightmare
     .goto(url)
     .wait('.echo-texte')
