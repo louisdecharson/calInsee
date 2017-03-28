@@ -30,9 +30,8 @@ app.use('/',express.static(__dirname + '/public/'));
 // Calendar
 // --------
 app.get('/cal/:cals', cal.getCals);
-app.get('/cal',cal.getFormCal);
+app.get('/',cal.getFormCal);
 app.post('/createCal',cal.sendCal);
-app.post('/cal/createCal',cal.sendCal);
 
 app.get('/status',function(req,res){
     res.set('Content-Type','text/plain');
