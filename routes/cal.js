@@ -289,7 +289,7 @@ function getDestatis(url,v,cb) {
         if (!e & r.statusCode == 200) {
             var $ = cheerio.load(h);
             $('tbody').children('tr.termin').each(function(i,e){
-                var time = new Date($(this).children('td.voetermin').text()),
+                var time = new Date($(this).children('td.voetermin').text() + ' 09:00'),
                     refPeriod = $(this).children('td.ref_period').text(),
                     title = $(this).children('td.title').text(),
                     comment = '';
@@ -479,12 +479,13 @@ function buildCalDe(v,alarms) {
     v.forEach(function(it,ind){
         var startDate = it[2];
         var endDate = new Date(it[2].getTime()+3600000);
+        var title = 'Germany - ' + it[0].trim() + '(' + it[3].trim() + ')';
         var event = cal.createEvent({
             start: startDate,
             end: endDate,
             summary: it[0],
             description: it[3],
-            organizer: 'Insee <contact@insee.fr>'
+            organizer: 'Louis de Charsonville <louis.decharsonville@banque-france.fr>'
         });
         if (Array.isArray(alarms)) {
             alarms.forEach(function(item,index){
