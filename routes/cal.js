@@ -485,7 +485,7 @@ function buildCalDe(v,alarms) {
             end: endDate,
             summary: it[0],
             description: it[3],
-            organizer: 'Louis de Charsonville <louis.decharsonville@banque-france.fr>'
+            organizer: 'LdC <louis.decharsonville@banque-france.fr>'
         });
         if (Array.isArray(alarms)) {
             alarms.forEach(function(item,index){
