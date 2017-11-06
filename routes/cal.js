@@ -277,4 +277,252 @@ exports.sendCal = function(req,res) {
     res.redirect(route);
 };
 
+// Germany Calendar
+const de_ipi = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/ProductionIndex.html';
+const de_mno = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/ManufacturingNewOrders.html';
+const de_pmi = 'https://www.markiteconomics.com/public/page.mvc/diaryofreleasedates';
+const de_gdp = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/GDP.html';
+
+
+function getDestatis(url,v,cb) {
+    request(url,function(e,r,h){
+        if (!e & r.statusCode == 200) {
+            var $ = cheerio.load(h);
+            $('tbody').children('tr.termin').each(function(i,e){
+                var time = new Date($(this).children('td.voetermin').text()),
+                    refPeriod = $(this).children('td.ref_period').text(),
+                    title = $(this).children('td.title').text(),
+                    comment = '';
+                switch(title.trim().substring(0,2)) {
+                case 'Pr':
+                    switch(refPeriod.trim().substring(0,3).toLowerCase()){
+                    case 'jan':
+                        comment = 'GDP Q1 - 3rd estimation';
+                        break;
+                    case 'feb':
+                        comment = 'GDP Q1 - 4th estimation';
+                        break;
+                    case 'apr':
+                        comment = 'GDP Q2 - 3rd estimation';
+                        break;
+                    case 'may':
+                        comment = 'GDP Q2 - 4th estimation';
+                        break;
+                    case 'july':
+                        comment = 'GDP Q3 - 3rd estimation';
+                        break;
+                    case 'aug':
+                        comment = 'GDP Q3 - 4th estimation';
+                        break;
+                    case 'oct':
+                        comment = 'GDP Q4 - 3rd estimation';
+                        break;
+                    case 'nov':
+                        comment = 'GDP Q4 - 4th estimation';
+                        break;
+                    default:
+                        comment = '';
+                        break;
+                    }
+                    break;
+                case 'In':
+                    switch(refPeriod.trim().substring(0,3).toLowerCase()){
+                    case 'dec':
+                        comment = 'GDP Q1 - 2nd estimation';
+                        break;
+                    case 'mar':
+                        comment = 'GDP Q2 - 2nd estimation';
+                        break;
+                    case 'jun':
+                        comment = 'GDP Q3 - 2nd estimation';
+                        break;
+                    case 'sep':
+                        comment = 'GDP Q4 - 2nd estimation';
+                        break;
+                    default:
+                        comment = '';
+                    }
+                    break;
+                case 'Gr':
+                    comment = 'GDP - ' + $(this).children('td.add_info').text();
+                    break;
+                default:
+                    comment = title.substring(0,3);
+                    break;
+                }
+                v.push([title,refPeriod,time,comment]);
+            });
+            cb(v);
+        } 
+    });
+}
+
+
+function getQuarter(date) {
+    var monthIndex = date.getMonth();
+    switch (true){
+    case  monthIndex < 4:
+        return '1';
+        break;
+    case monthIndex > 3 && monthIndex < 7:
+        return '2';
+        break;
+    case monthIndex > 6 && monthIndex < 10:
+        return '3';
+        break;
+    case monthIndex > 9 && monthIndex < 13:
+        return '4';
+        break;
+    default:
+        return '';
+    }
+}
+
+function getRefPeriodPMI(date) {
+    var monthNames = [
+        "January", "February", "March",
+        "April", "May", "June", "July",
+        "August", "September", "October",
+        "November", "December"
+    ];
+    var monthIndex = date.getMonth();
+    var year = date.getFullYear();
+
+    return monthNames[monthIndex] + ' ' + year;
+}
+
+function getPMI(url,v,cb) {
+    request(url,function(e,r,h) {
+        if (!e & r.statusCode === 200) {
+            var $ = cheerio.load(h);
+            $('.releaseDateList').children('.listItem').each(function(i,e){
+                var title = $(this).children('.releaseTitle').text().trim();
+                if (title.indexOf('Germany Manufacturing PMI') > -1){
+                    var date = $(this).prevAll('.listHeading').eq(0).text().trim() + ' ' + $(this).prevAll('.listSubHeading').eq(0).text().trim()+ ' ' + $(this).children('.calendarDate').text().substring(0,5),
+                        time = new Date(date),
+                        refPeriod = getRefPeriodPMI(time);
+                    if (time.getMonth() === 1 || time.getMonth() === 4 || time.getMonth() === 7 || time.getMonth() == 10) {
+                        var comment = 'GDP Q' + getQuarter(time) +' - 1st estimation';
+                    } else {
+                        var comment = '';
+                    }
+                    v.push([title,refPeriod,time,comment]);
+                }
+            });
+            cb(v);
+        } else {
+            cb(v);
+            console.log('Error in getPMI');
+        }
+    });
+}
+
+
+function formatDate(date) {
+  var monthNames = [
+    "January", "February", "March",
+    "April", "May", "June", "July",
+    "August", "September", "October",
+    "November", "December"
+  ];
+
+  var day = date.getDate();
+  var monthIndex = date.getMonth();
+  var year = date.getFullYear();
+
+  return day + ' ' + monthNames[monthIndex] + ' ' + year;
+}
+
+var bootstrap4 = '<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.3/css/bootstrap.min.css" integrity="sha384-MIwDKRSSImVFAZCVLtU0LMDdON6KVCrZHyVQQj6e8wIEJkW4tvwqXrbMIya1vriY" crossorigin="anonymous"><script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.3/js/bootstrap.min.js" integrity="sha384-ux8v3A6CPtOTqOzMKiuo3d/DomGaaClxFYdCu2HPMBEkf6x2xiDyJ7gkXU0MWwaD" crossorigin="anonymous"></script>';
+var css = '<style display:none>body {padding-left: 10px; padding-right: 10px; } </style>';
+var script = "<script>function getUrl() { var elementsCal = document.getElementsByName('cal'); var cals = []; for(var i=0; i<elementsCal.length; i++) { if (elementsCal[i].checked) { cals.push(elementsCal[i].value); } } cals = cals.join('+'); var alarms = []; var elementsAlarm = document.getElementsByName('alarm'); for(var i=0; i<elementsAlarm.length; i++) { if (elementsAlarm[i].checked) { alarms.push(elementsAlarm[i].value); } } alarms = alarms.join('&alarm='); var route = 'webcal://calinsee.herokuapp.com/cal/' + cals ; if (alarms.length > 0) { route = route + '?alarm=' + alarms ; } document.getElementById('myUrl').innerHTML = route; }; $(document).ready(function() { $('.myCheckbox').click(function() { var myElem = $(this).parents('a'); if (myElem.hasClass('aactive')) { myElem.removeClass('aactive'); } else { myElem.addClass('aactive'); } }); });</script>";
+var githubRibbon = '<a href="https://github.com/louisdecharson/eviewsSDMX"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>';
+var footer = '</br><hr></hr><font size="2"><p>Credits : <a href="https://github.com/louisdecharson/">https://github.com/louisdecharson/</a></p></font>';
+var jQuery = '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>';
+
+function buildHTML(v) {
+    var header = '<title>Calendar - GDP Germany</title>',
+        theader = '<th>Date</th><th>Name</th><th>Comment</th>',
+        tbody = '',
+        body = '<br/><h1>Calendar of publications of German economic indicators</h1><br/>',
+        button = '<button type="button" class="btn btn-primary" onclick="location.href=\'webcal://calinsee.herokuapp.com/de/cal?alarm=1440\';">Subscribe to calendar</button><br/><br/>';
+    v.forEach(function(item,index){
+        if (item[2].getTime() > Date.now()-86400000) {
+            tbody += '<tr>';
+            tbody += '<td class="date">' + formatDate(item[2]) + '</td>';
+            tbody += '<td class="title">'+ item[0] + ' - ' + item[1] + '</td>';
+            tbody += '<td class="comment">' + item[3] + '</td>';
+            tbody += '</tr>';
+        }
+    });
+    var myHtml = '<!DOCTYPE html>' + '<html><head>' + jQuery + header + bootstrap4 + css + '</head><body>' + body + button + '<table class="table table-condensed table-hover">' + '<thead>'  + '<tr>' + theader + '</tr>' + '</thead>' + '<tbody class="list">' + tbody + '</tbody>'  +'</table></div>' + jQuery +'</body></html>';
+    return myHtml;
+}
+
+
+function sortbyTime(a,b) {
+    if (a[2].getTime() === b[2].getTime()) {
+        return 0;
+    }
+    else {
+        return (a[2].getTime() < b[2].getTime()) ? -1 : 1;
+    }
+}
+
+
+// Construit le calendrier à partir de la liste des évenements
+function buildCalDe(v,alarms) {
+    var cal = ical({
+        domain: 'calinsee.herokuapp.com',
+        name: 'Calendar of German economic indicators'
+    });
+    v.forEach(function(it,ind){
+        var startDate = it[2];
+        var endDate = new Date(it[2].getTime()+3600000);
+        var event = cal.createEvent({
+            start: startDate,
+            end: endDate,
+            summary: it[0],
+            description: it[3],
+            organizer: 'Insee <contact@insee.fr>'
+        });
+        if (Array.isArray(alarms)) {
+            alarms.forEach(function(item,index){
+                event.createAlarm({type: 'display', trigger: item*60});
+            });
+        } else if (typeof alarms != 'undefined') {
+            event.createAlarm({type: 'display', trigger: alarms*60});
+        }
+    });
+    return cal.toString();
+};
+
+function feedCalDe(cb) {
+    var vecEv = [];
+    getDestatis(de_ipi,vecEv,function(vecEv) {
+        getDestatis(de_mno,vecEv,function(vecEv) {
+            getDestatis(de_gdp,vecEv,function(vecEv) {
+                getPMI(de_pmi,vecEv,function(vecEv) {
+                    cb(vecEv.sort(sortbyTime));
+                });
+            });
+        });       
+    });
+}
+
+exports.getPageDE = function(req,res) {
+    feedCalDe(function(v){
+    res.send(buildHTML(v));
+    });
+};
+    
+exports.getCalDE = function(req,res) {
+    var alarms = req.query.alarm;
+    feedCalDe(function(v) {
+        res.setHeader("Content-Type", 'text/calendar');
+        res.send(buildCalDe(v,alarms));
+    });
+};
+
+
 
