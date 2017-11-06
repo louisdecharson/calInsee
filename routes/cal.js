@@ -499,21 +499,41 @@ function buildCalDe(v,alarms) {
 };
 
 function feedCalDe(cb) {
-    var vecEv = [];
-    getDestatis(de_ipi,vecEv,function(vecEv) {
-        getDestatis(de_mno,vecEv,function(vecEv) {
-            getDestatis(de_gdp,vecEv,function(vecEv) {
-                getPMI(de_pmi,vecEv,function(vecEv) {
-                    cb(vecEv.sort(sortbyTime));
-                });
-            });
-        });       
+    var vec = [],
+        c = 4;
+    getDestatis(de_ipi,[],function(v) {
+        vec = vec.concat(v);
+        c--;
+        if (c === 0) {
+            cb(vec);
+        }
     });
+    getDestatis(de_mno,[],function(v) {
+        vec = vec.concat(v);
+            c--;
+        if (c === 0) {
+            cb(vec);
+        }
+    });
+    getDestatis(de_gdp,[],function(v) {
+        vec = vec.concat(v);
+            c--;
+        if (c === 0) {
+            cb(vec);
+        }
+    });
+    getPMI(de_pmi,[],function(v) {
+        vec = vec.concat(v);
+            c--;
+        if (c === 0) {
+            cb(vec);
+        }
+    });    
 }
 
 exports.getPageDE = function(req,res) {
     feedCalDe(function(v){
-    res.send(buildHTML(v));
+        res.send(buildHTML(v.sort(sortbyTime)));
     });
 };
     
