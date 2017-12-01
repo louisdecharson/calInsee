@@ -281,6 +281,7 @@ exports.sendCal = function(req,res) {
 const de_ipi = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/ProductionIndex.html';
 const de_mno = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/ManufacturingNewOrders.html';
 const de_pmi = 'https://www.markiteconomics.com/public/page.mvc/diaryofreleasedates';
+// const de_pmi = 'https://www.markiteconomics.com/Public/Release/PressReleases?language=en';
 const de_gdp = 'https://www.destatis.de/EN/PressServices/Press/preview/Events/GDP.html';
 
 
@@ -347,7 +348,7 @@ function getDestatis(url,v,cb) {
                     comment = 'GDP - ' + $(this).children('td.add_info').text();
                     break;
                 default:
-                    comment = title.substring(0,3);
+                    comment = '';
                     break;
                 }
                 v.push([title,refPeriod,time,comment]);
@@ -417,7 +418,6 @@ function getPMI(url,v,cb) {
     });
 }
 
-
 function formatDate(date) {
   var monthNames = [
     "January", "February", "March",
@@ -445,7 +445,8 @@ function buildHTML(v) {
         theader = '<th>Date</th><th>Name</th><th>Comment</th>',
         tbody = '',
         body = '<br/><h1>Calendar of publications of German economic indicators</h1><br/>',
-        button = '<button type="button" class="btn btn-primary" onclick="location.href=\'webcal://calinsee.herokuapp.com/de/cal?alarm=1440\';">Subscribe to calendar</button><br/><br/>';
+        button = '<button type="button" class="btn btn-primary" onclick="location.href=\'webcal://calinsee.herokuapp.com/de/cal?alarm=1440\';">Subscribe to calendar</button><br/><br/>',
+        warning = '<div class="alert alert-warning" role="alert"><strong>Warning:</strong> PMI calendar is only published one month in advance which is why it might not appear here yet. Note that Germany PMI Manufacturing is often released the first day of the month</div>';
     v.forEach(function(item,index){
         if (item[2].getTime() > Date.now()-86400000) {
             tbody += '<tr>';
@@ -455,7 +456,7 @@ function buildHTML(v) {
             tbody += '</tr>';
         }
     });
-    var myHtml = '<!DOCTYPE html>' + '<html><head>' + jQuery + header + bootstrap4 + css + '</head><body>' + body + button + '<table class="table table-condensed table-hover">' + '<thead>'  + '<tr>' + theader + '</tr>' + '</thead>' + '<tbody class="list">' + tbody + '</tbody>'  +'</table></div>' + jQuery +'</body></html>';
+    var myHtml = '<!DOCTYPE html>' + '<html><head>' + jQuery + header + bootstrap4 + css + '</head><body>' + body + button + warning + '<table class="table table-condensed table-hover">' + '<thead>'  + '<tr>' + theader + '</tr>' + '</thead>' + '<tbody class="list">' + tbody + '</tbody>'  +'</table></div>' + jQuery +'</body></html>';
     return myHtml;
 }
 
